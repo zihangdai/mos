@@ -70,10 +70,10 @@ def batchify(data, bsz):
 
 def repackage_hidden(h):
     """Wraps hidden states in new Variables, to detach them from their history."""
-    if type(h) == Variable:
-        return Variable(h.data)
-    else:
+    if isinstance(h, tuple) or isinstance(h, list):
         return tuple(repackage_hidden(v) for v in h)
+    else:
+        return h.detach()
 
 
 def get_batch(source, i):
@@ -233,4 +233,4 @@ args.batch_size=1
 print('running dynamic evaluation')
 #apply dynamic evaluation
 loss = evaluate()
-print('perplexity loss: ' + str(loss[0]))
+print('perplexity loss: ' + str(loss))
