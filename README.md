@@ -9,7 +9,21 @@ This is the code we used in our paper
 
 ## Requirements
 
-Python 3.6, PyTorch 0.2.0
+Python 3.6, PyTorch 0.4.1
+
+## Notes on PyTorch update
+
+The original implementation and tuning were based on PyTorch 0.2.0. The code base has been upgraded to be compatible with 0.4.0. To exactly reproduce the results in our paper, you would need to use PyTorch 0.2.0 and do
+```git checkout 4c43dee3f8a0aacea759c07f10d8f80dc0bb9bb2```
+to roll back to the previous version.
+
+Below are results of the current version on Penn Treebank as reported in https://github.com/zihangdai/mos/pull/9 . One may need further tuning to match the original results.
+
+**MoS w/o finetune:** Valid 58.34 Test 56.18
+
+**MoS:** Valid 56.83 Test 54.64
+
+**MoS + dynamic evaluation:** Valid 49.03 Test: 48.43
 
 ## Download the data
 
