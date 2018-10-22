@@ -70,15 +70,15 @@ def batchify(data, bsz):
 
 def repackage_hidden(h):
     """Wraps hidden states in new Variables, to detach them from their history."""
-    if type(h) == Variable:
-        return Variable(h.data)
-    else:
+    if isinstance(h, tuple) or isinstance(h, list):
         return tuple(repackage_hidden(v) for v in h)
+    else:
+        return h.detach()
 
 
-def get_batch(source, i, evaluation=False):
+def get_batch(source, i):
     seq_len = min(args.bptt, len(source) - 1 - i)
-    data = Variable(source[i:i+seq_len], volatile=evaluation)
+    data = Variable(source[i:i+seq_len])
     target = Variable(source[i+1:i+1+seq_len].view(-1))
     return data, target
 
@@ -95,7 +95,8 @@ def gradstat():
 
     while i < train_data.size(0) - 1 - 1:
         seq_len = args.bptt
-        model.eval()
+        model.train()
+        model.use_dropout = False
 
         data, targets = get_batch(train_data, i)
         hidden = repackage_hidden(hidden)
@@ -161,7 +162,8 @@ def evaluate():
     #loops through data
     while i < eval_data.size(0) - 1 - 1:
 
-        model.eval()
+        model.train()
+        model.use_dropout = False
         #gets last chunk of seqlence if seqlen doesn't divide full sequence cleanly
         if (i+seq_len)>=eval_data.size(0):
             if last:
@@ -231,4 +233,4 @@ args.batch_size=1
 print('running dynamic evaluation')
 #apply dynamic evaluation
 loss = evaluate()
-print('perplexity loss: ' + str(loss[0]))
+print('perplexity loss: ' + str(loss))

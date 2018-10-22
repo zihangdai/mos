@@ -15,12 +15,13 @@ class RNNModel(nn.Module):
                  dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, 
                  tie_weights=False, ldropout=0.5, n_experts=10):
         super(RNNModel, self).__init__()
+        self.use_dropout = True
         self.lockdrop = LockedDropout()
         self.encoder = nn.Embedding(ntoken, ninp)
         
         self.rnns = [torch.nn.LSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else nhidlast, 1, dropout=0) for l in range(nlayers)]
         if wdrop:
-            self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
+            self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop if self.use_dropout else 0) for rnn in self.rnns]
         self.rnns = torch.nn.ModuleList(self.rnns)
 
         self.prior = nn.Linear(nhidlast, n_experts, bias=False)
@@ -68,10 +69,10 @@ class RNNModel(nn.Module):
     def forward(self, input, hidden, return_h=False, return_prob=False):
         batch_size = input.size(1)
 
-        emb = embedded_dropout(self.encoder, input, dropout=self.dropoute if self.training else 0)
+        emb = embedded_dropout(self.encoder, input, dropout=self.dropoute if (self.training and self.use_dropout) else 0)
         #emb = self.idrop(emb)
 
-        emb = self.lockdrop(emb, self.dropouti)
+        emb = self.lockdrop(emb, self.dropouti if self.use_dropout else 0)
 
         raw_output = emb
         new_hidden = []
@@ -85,21 +86,21 @@ class RNNModel(nn.Module):
             raw_outputs.append(raw_output)
             if l != self.nlayers - 1:
                 #self.hdrop(raw_output)
-                raw_output = self.lockdrop(raw_output, self.dropouth)
+                raw_output = self.lockdrop(raw_output, self.dropouth if self.use_dropout else 0)
                 outputs.append(raw_output)
         hidden = new_hidden
 
-        output = self.lockdrop(raw_output, self.dropout)
+        output = self.lockdrop(raw_output, self.dropout if self.use_dropout else 0)
         outputs.append(output)
 
         latent = self.latent(output)
-        latent = self.lockdrop(latent, self.dropoutl)
+        latent = self.lockdrop(latent, self.dropoutl if self.use_dropout else 0)
         logit = self.decoder(latent.view(-1, self.ninp))
 
         prior_logit = self.prior(output).contiguous().view(-1, self.n_experts)
-        prior = nn.functional.softmax(prior_logit)
+        prior = nn.functional.softmax(prior_logit, -1)
 
-        prob = nn.functional.softmax(logit.view(-1, self.ntoken)).view(-1, self.n_experts, self.ntoken)
+        prob = nn.functional.softmax(logit.view(-1, self.ntoken), -1).view(-1, self.n_experts, self.ntoken)
         prob = (prob * prior.unsqueeze(2).expand_as(prob)).sum(1)
 
         if return_prob:
@@ -129,4 +130,3 @@ if __name__ == '__main__':
     # input = Variable(torch.LongTensor(13, 9).random_(0, 10))
     # hidden = model.init_hidden(9)
     # print(model.sample(input, hidden, 5, 6, 1, 2, sample_latent=True).size())
-
