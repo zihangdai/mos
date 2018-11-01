@@ -13,7 +13,7 @@ Python 3.6, PyTorch 0.4.1
 
 ## Notes on PyTorch update
 
-The original implementation and tuning were based on PyTorch 0.2.0. The code base has been upgraded to be compatible with 0.4.0. To exactly reproduce the results in our paper, you would need to use PyTorch 0.2.0 and do
+The original implementation and tuning were based on PyTorch 0.2.0. The code base has been upgraded to be compatible with 0.4.1. To exactly reproduce the results in our paper, you would need to use PyTorch 0.2.0 and do
 ```git checkout 4c43dee3f8a0aacea759c07f10d8f80dc0bb9bb2```
 to roll back to the previous version.
 
