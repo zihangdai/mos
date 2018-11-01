@@ -56,8 +56,8 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--nonmono', type=int, default=5,
                     help='random seed')
-parser.add_argument('--cuda', action='store_false',
-                    help='use CUDA')
+parser.add_argument('--nocuda', action='store_true',
+                    help='not use CUDA')
 parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str,  default='EXP',
@@ -104,8 +104,8 @@ def logging(s, print_=True, log_=True):
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 if torch.cuda.is_available():
-    if not args.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    if args.nocuda:
+        print("WARNING: You have a CUDA device, so you should probably run without --nocuda")
     else:
         torch.cuda.manual_seed_all(args.seed)
 
